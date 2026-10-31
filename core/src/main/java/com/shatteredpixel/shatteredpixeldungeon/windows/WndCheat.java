@@ -29,6 +29,12 @@ import com.shatteredpixel.shatteredpixeldungeon.items.EnergyCrystal;
 import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
+import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.Trinket;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -39,6 +45,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollingGridPane;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollingListPane;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.BitmapText;
@@ -110,6 +117,156 @@ public class WndCheat extends WndTabbed {
 
 	private static String txt(String key, Object... args){
 		return Messages.get(WndCheat.class, key, args);
+	}
+
+	//*****************************
+	// Level / enchantment helpers
+	//*****************************
+
+	//artifacts, trinkets and the spirit bow can't normally be upgraded with scrolls, but can be edited here
+	public static boolean canEditLevel(Item i){
+		return i.isUpgradable() || i instanceof Artifact || i instanceof Trinket || i instanceof SpiritBow;
+	}
+
+	public static int minLevel(Item i){
+		if (i instanceof Artifact || i instanceof Trinket) return 0;
+		if (i instanceof SpiritBow) return i.level() - ((SpiritBow) i).bonusLevel;
+		return -10;
+	}
+
+	public static int maxLevel(Item i){
+		if (i instanceof Artifact) return ((Artifact) i).levelCap();
+		if (i instanceof Trinket) return 3;
+		return 999;
+	}
+
+	public static String levelLabel(Item i){
+		if (i instanceof Artifact || i instanceof Trinket){
+			return txt("upgrade_max", maxLevel(i));
+		}
+		return txt("upgrade");
+	}
+
+	public static void setLevel(Item i, int v){
+		if (i instanceof SpiritBow){
+			SpiritBow bow = (SpiritBow) i;
+			bow.bonusLevel += v - bow.level();
+		} else if (i instanceof Artifact){
+			//artifacts update charge caps and such in upgrade(), so step up one level at a time
+			int cur = i.level();
+			if (v > cur){
+				for (int n = cur; n < v; n++) i.upgrade();
+			} else {
+				i.level(v);
+			}
+		} else {
+			i.level(v);
+			if (i instanceof MagesStaff){
+				((MagesStaff) i).updateWand(false);
+			}
+		}
+		i.levelKnown = true;
+	}
+
+	public static boolean canEnchant(Item i){
+		return i instanceof Weapon || i instanceof Armor;
+	}
+
+	public static Class<?> currentEnchant(Item i){
+		if (i instanceof Weapon && ((Weapon) i).enchantment != null) return ((Weapon) i).enchantment.getClass();
+		if (i instanceof Armor && ((Armor) i).glyph != null) return ((Armor) i).glyph.getClass();
+		return null;
+	}
+
+	//applies an enchantment (weapons) or glyph (armor). Returns true if it is a curse.
+	public static boolean applyEnchant(Item i, Class<?> cls){
+		if (i instanceof Weapon){
+			Weapon.Enchantment e = cls == null ? null : (Weapon.Enchantment) Reflection.newInstance(cls);
+			((Weapon) i).enchant(e);
+			return e != null && e.curse();
+		} else if (i instanceof Armor){
+			Armor.Glyph g = cls == null ? null : (Armor.Glyph) Reflection.newInstance(cls);
+			((Armor) i).inscribe(g);
+			return g != null && g.curse();
+		}
+		return false;
+	}
+
+	public static String enchantName(Class<?> cls){
+		if (cls == null) return txt("none");
+		Object o = Reflection.newInstance(cls);
+		if (o instanceof Weapon.Enchantment) return Messages.titleCase(((Weapon.Enchantment) o).name());
+		if (o instanceof Armor.Glyph) return Messages.titleCase(((Armor.Glyph) o).name());
+		return cls.getSimpleName();
+	}
+
+	public static String enchantButtonText(Item i, Class<?> cls){
+		return txt(i instanceof Armor ? "glyph_btn" : "enchant_btn", enchantName(cls));
+	}
+
+	//scrolling list of every enchantment (for weapons) or glyph (for armor), including curses
+	public static abstract class WndEnchantPicker extends Window {
+
+		private static final int WIDTH = 130;
+		private static final int HEIGHT = 160;
+		private static final int ITEM_HEIGHT = 16;
+
+		public WndEnchantPicker(Item item){
+			super();
+			boolean armor = item instanceof Armor;
+
+			RenderedTextBlock title = PixelScene.renderTextBlock(txt(armor ? "pick_glyph" : "pick_enchant"), 9);
+			title.hardlight(TITLE_COLOR);
+			title.setPos((WIDTH - title.width())/2f, 2);
+			add(title);
+
+			ScrollingListPane list = new ScrollingListPane();
+			add(list);
+
+			addEntry(list, item, null);
+
+			Class<?>[][] tiers = armor
+					? new Class<?>[][]{Armor.Glyph.common, Armor.Glyph.uncommon, Armor.Glyph.rare, Armor.Glyph.curses}
+					: new Class<?>[][]{Weapon.Enchantment.common, Weapon.Enchantment.uncommon, Weapon.Enchantment.rare, Weapon.Enchantment.curses};
+			String[] tierNames = {"tier_common", "tier_uncommon", "tier_rare", "tier_curse"};
+			for (int t = 0; t < tiers.length; t++){
+				list.addTitle(txt(tierNames[t]));
+				for (Class<?> cls : tiers[t]){
+					addEntry(list, item, cls);
+				}
+			}
+
+			float top = title.bottom() + 3;
+			resize(WIDTH, HEIGHT);
+			list.setRect(0, top, WIDTH, HEIGHT - top);
+		}
+
+		private void addEntry(ScrollingListPane list, Item item, final Class<?> cls){
+			ItemSprite icon = new ItemSprite(item.image());
+			ScrollingListPane.ListItem entry = new ScrollingListPane.ListItem(icon, enchantName(cls)){
+				@Override
+				public boolean onClick(float x, float y) {
+					if (inside(x, y)){
+						onPick(cls);
+						WndEnchantPicker.this.hide();
+						return true;
+					}
+					return false;
+				}
+			};
+			if (cls != null){
+				Object o = Reflection.newInstance(cls);
+				ItemSprite.Glowing glow = null;
+				if (o instanceof Weapon.Enchantment) glow = ((Weapon.Enchantment) o).glowing();
+				if (o instanceof Armor.Glyph) glow = ((Armor.Glyph) o).glowing();
+				if (glow != null) entry.hardlightIcon(glow.color);
+			}
+			if (cls == currentEnchant(item)) entry.hardlight(TITLE_COLOR);
+			entry.setSize(WIDTH, ITEM_HEIGHT);
+			list.addItem(entry);
+		}
+
+		protected abstract void onPick(Class<?> cls);
 	}
 
 	private static void afterChange(){
@@ -397,6 +554,7 @@ public class WndCheat extends WndTabbed {
 
 		private int quantity = 1;
 		private int level = 0;
+		private Class<?> enchant = null;
 
 		public WndSpawnItem(final Class<?> cls){
 			super();
@@ -420,22 +578,43 @@ public class WndCheat extends WndTabbed {
 				pos = qty.bottom() + 2;
 			}
 
-			if (preview.isUpgradable()){
-				NumberRow lvl = new NumberRow(txt("upgrade")){
+			if (canEditLevel(preview)){
+				final int baseLevel = preview.level();
+				level = baseLevel;
+				NumberRow lvl = new NumberRow(levelLabel(preview)){
 					protected int get(){ return level; }
 					protected void set(int v){ level = v; }
-					protected int min(){ return -10; }
-					protected int max(){ return 999; }
+					protected int min(){ return minLevel(preview); }
+					protected int max(){ return maxLevel(preview); }
 				};
 				lvl.setRect(0, pos, WIDTH, NumberRow.HEIGHT);
 				add(lvl);
 				pos = lvl.bottom() + 2;
 			}
 
+			if (canEnchant(preview)){
+				RedButton ench = new RedButton(enchantButtonText(preview, null), 7){
+					@Override
+					protected void onClick() {
+						final RedButton btn = this;
+						GameScene.show(new WndEnchantPicker(preview){
+							@Override
+							protected void onPick(Class<?> cls) {
+								enchant = cls;
+								btn.text(enchantButtonText(preview, cls));
+							}
+						});
+					}
+				};
+				ench.setRect(0, pos + 2, WIDTH, 18);
+				add(ench);
+				pos = ench.bottom();
+			}
+
 			RedButton give = new RedButton(txt("give")){
 				@Override
 				protected void onClick() {
-					giveItem(cls, quantity, level);
+					giveItem(cls, quantity, level, enchant);
 				}
 			};
 			give.setRect(0, pos + 2, WIDTH, 18);
@@ -444,7 +623,7 @@ public class WndCheat extends WndTabbed {
 			resize(WIDTH, (int)give.bottom());
 		}
 
-		private static void giveItem(Class<?> cls, int quantity, int level){
+		private static void giveItem(Class<?> cls, int quantity, int level, Class<?> enchant){
 			Hero hero = Dungeon.hero;
 			Item item = (Item) Reflection.newInstance(cls);
 			if (item == null) return;
@@ -464,11 +643,14 @@ public class WndCheat extends WndTabbed {
 			if (item.stackable){
 				item.quantity(quantity);
 			}
-			if (item.isUpgradable() && level != 0){
-				item.level(level);
+			if (canEditLevel(item) && level != item.level()){
+				setLevel(item, level);
 			}
 			item.identify(false);
 			item.cursed = false;
+			if (enchant != null && canEnchant(item)){
+				item.cursed = applyEnchant(item, enchant);
+			}
 
 			if (!item.collect()){
 				Dungeon.level.drop(item, hero.pos).sprite.drop();
@@ -552,7 +734,7 @@ public class WndCheat extends WndTabbed {
 			String badge = null;
 			if (item.quantity() > 1){
 				badge = Integer.toString(item.quantity());
-			} else if (item.isUpgradable() && item.level() != 0){
+			} else if (canEditLevel(item) && item.level() != 0){
 				badge = (item.level() > 0 ? "+" : "") + item.level();
 			}
 			if (badge != null){
@@ -576,6 +758,7 @@ public class WndCheat extends WndTabbed {
 
 		private final Item item;
 		private IconTitle title;
+		private RedButton curseBtn;
 
 		public WndEditItem(final Item item){
 			super();
@@ -599,20 +782,43 @@ public class WndCheat extends WndTabbed {
 				pos = qty.bottom() + 2;
 			}
 
-			if (item.isUpgradable()){
-				NumberRow lvl = new NumberRow(txt("upgrade")){
+			if (canEditLevel(item)){
+				NumberRow lvl = new NumberRow(levelLabel(item)){
 					protected int get(){ return item.level(); }
-					protected void set(int v){
-						item.level(v);
-						item.levelKnown = true;
-					}
-					protected int min(){ return -10; }
-					protected int max(){ return 999; }
+					protected void set(int v){ setLevel(item, v); }
+					protected int min(){ return minLevel(item); }
+					protected int max(){ return maxLevel(item); }
 					protected void onChanged(){ super.onChanged(); updateTitle(); }
 				};
 				lvl.setRect(0, pos, WIDTH, NumberRow.HEIGHT);
 				add(lvl);
 				pos = lvl.bottom() + 2;
+			}
+
+			if (canEnchant(item)){
+				RedButton ench = new RedButton(enchantButtonText(item, currentEnchant(item)), 7){
+					@Override
+					protected void onClick() {
+						final RedButton btn = this;
+						GameScene.show(new WndEnchantPicker(item){
+							@Override
+							protected void onPick(Class<?> cls) {
+								boolean curse = applyEnchant(item, cls);
+								if (curse){
+									item.cursed = true;
+									item.cursedKnown = true;
+								}
+								btn.text(enchantButtonText(item, cls));
+								if (curseBtn != null) curseBtn.text(item.cursed ? txt("uncurse") : txt("curse"));
+								afterChange();
+								updateTitle();
+							}
+						});
+					}
+				};
+				ench.setRect(0, pos + 2, WIDTH, 18);
+				add(ench);
+				pos = ench.bottom();
 			}
 
 			float bw = (WIDTH - 2) / 2f;
@@ -640,6 +846,7 @@ public class WndCheat extends WndTabbed {
 			};
 			curse.setRect(bw + 2, pos + 2, bw, 18);
 			add(curse);
+			curseBtn = curse;
 
 			pos = curse.bottom() + 2;
 

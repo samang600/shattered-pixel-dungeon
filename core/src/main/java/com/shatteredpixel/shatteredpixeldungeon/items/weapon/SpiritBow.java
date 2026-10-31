@@ -50,6 +50,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.particles.Emitter;
 import com.watabou.utils.Callback;
+import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 import com.watabou.utils.Reflection;
 
@@ -189,7 +190,8 @@ public class SpiritBow extends Weapon {
 	public int min(int lvl) {
 		int dmg = 1 + Dungeon.hero.lvl/5
 				+ RingOfSharpshooting.levelDamageBonus(Dungeon.hero)
-				+ (curseInfusionBonus ? 1 + Dungeon.hero.lvl/30 : 0);
+				+ (curseInfusionBonus ? 1 + Dungeon.hero.lvl/30 : 0)
+				+ bonusLevel;
 		return Math.max(0, dmg);
 	}
 	
@@ -197,7 +199,8 @@ public class SpiritBow extends Weapon {
 	public int max(int lvl) {
 		int dmg = 6 + (int)(Dungeon.hero.lvl/2.5f)
 				+ 2*RingOfSharpshooting.levelDamageBonus(Dungeon.hero)
-				+ (curseInfusionBonus ? 2 + Dungeon.hero.lvl/15 : 0);
+				+ (curseInfusionBonus ? 2 + Dungeon.hero.lvl/15 : 0)
+				+ 2*bonusLevel;
 		return Math.max(0, dmg);
 	}
 
@@ -272,7 +275,24 @@ public class SpiritBow extends Weapon {
 	public int level() {
 		int level = Dungeon.hero == null ? 0 : Dungeon.hero.lvl/5;
 		if (curseInfusionBonus) level += 1 + level/6;
-		return level;
+		return level + bonusLevel;
+	}
+
+	//extra levels granted by the cheat menu, on top of the normal hero-level scaling
+	public int bonusLevel = 0;
+
+	private static final String BONUS_LEVEL = "bonus_level";
+
+	@Override
+	public void storeInBundle(Bundle bundle) {
+		super.storeInBundle(bundle);
+		bundle.put(BONUS_LEVEL, bonusLevel);
+	}
+
+	@Override
+	public void restoreFromBundle(Bundle bundle) {
+		super.restoreFromBundle(bundle);
+		bonusLevel = bundle.getInt(BONUS_LEVEL);
 	}
 
 	@Override

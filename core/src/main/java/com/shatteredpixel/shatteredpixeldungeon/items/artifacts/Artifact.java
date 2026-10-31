@@ -119,6 +119,10 @@ public class Artifact extends KindofMisc {
 		return false;
 	}
 
+	public int levelCap(){
+		return levelCap;
+	}
+
 	@Override
 	public int visiblyUpgraded() {
 		return levelKnown ? Math.round((level()*10)/(float)levelCap): 0;
