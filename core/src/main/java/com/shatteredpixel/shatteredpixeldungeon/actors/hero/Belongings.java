@@ -32,6 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.KindofMisc;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.ArtifactPouch;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRemoveCurse;
@@ -292,6 +293,11 @@ public class Belongings implements Iterable<Item> {
 					return true;
 				}
 			}
+		}
+
+		//items stored inside an artifact pouch the hero is carrying
+		if (!lostInvent && ArtifactPouch.findPouchHolding(owner, contains) != null){
+			return true;
 		}
 		
 		return false;

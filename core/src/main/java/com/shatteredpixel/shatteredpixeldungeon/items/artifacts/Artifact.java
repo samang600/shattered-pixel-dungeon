@@ -123,6 +123,33 @@ public class Artifact extends KindofMisc {
 		return levelCap;
 	}
 
+	public int chargeCap(){
+		return chargeCap;
+	}
+
+	public int getCharge(){
+		return charge;
+	}
+
+	public void setCharge(int value){
+		charge = value;
+		partialCharge = 0;
+		updateQuickslot();
+	}
+
+	//removes this artifact's effects without going through the normal unequip logic
+	// used when the artifact is taken out of an equipped ArtifactPouch
+	public void deactivate(){
+		if (passiveBuff != null) {
+			if (passiveBuff.target != null) passiveBuff.detach();
+			passiveBuff = null;
+		}
+		if (activeBuff != null) {
+			if (activeBuff.target != null) activeBuff.detach();
+			activeBuff = null;
+		}
+	}
+
 	@Override
 	public int visiblyUpgraded() {
 		return levelKnown ? Math.round((level()*10)/(float)levelCap): 0;

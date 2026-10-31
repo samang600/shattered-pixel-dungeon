@@ -26,6 +26,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.ArtifactPouch;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -33,6 +34,8 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
 import com.watabou.utils.Random;
+
+import java.util.ArrayList;
 
 
 public abstract class KindofMisc extends EquipableItem {
@@ -194,7 +197,21 @@ public abstract class KindofMisc extends EquipableItem {
 	public boolean isEquipped( Hero hero ) {
 		return hero != null && (hero.belongings.artifact() == this
 				|| hero.belongings.misc() == this
-				|| hero.belongings.ring() == this);
+				|| hero.belongings.ring() == this
+				|| ArtifactPouch.isInEquippedPouch(hero, this));
+	}
+
+	@Override
+	public ArrayList<String> actions(Hero hero) {
+		ArrayList<String> actions = super.actions(hero);
+		//items stored in a pouch are managed through the pouch window
+		if (ArtifactPouch.findPouchHolding(hero, this) != null){
+			actions.remove(AC_EQUIP);
+			actions.remove(AC_UNEQUIP);
+			actions.remove(AC_DROP);
+			actions.remove(AC_THROW);
+		}
+		return actions;
 	}
 
 }

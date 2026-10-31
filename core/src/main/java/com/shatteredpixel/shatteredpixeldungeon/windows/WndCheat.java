@@ -31,6 +31,8 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.ArtifactPouch;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.Trinket;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
@@ -125,7 +127,8 @@ public class WndCheat extends WndTabbed {
 
 	//artifacts, trinkets and the spirit bow can't normally be upgraded with scrolls, but can be edited here
 	public static boolean canEditLevel(Item i){
-		return i.isUpgradable() || i instanceof Artifact || i instanceof Trinket || i instanceof SpiritBow;
+		return i.isUpgradable() || (i instanceof Artifact && ((Artifact) i).levelCap() > 0)
+				|| i instanceof Trinket || i instanceof SpiritBow;
 	}
 
 	public static int minLevel(Item i){
@@ -512,6 +515,9 @@ public class WndCheat extends WndTabbed {
 			grid.addHeader("_" + txt("spawn_title") + "_", 9, true);
 			grid.addHeader(txt("spawn_desc"), 6, true);
 
+			grid.addHeader(txt("special"));
+			addSpawnItem(ArtifactPouch.class);
+
 			ArrayList<Catalog> cats = new ArrayList<>(Catalog.equipmentCatalogs);
 			cats.addAll(Catalog.consumableCatalogs);
 			for (Catalog cat : cats){
@@ -520,25 +526,29 @@ public class WndCheat extends WndTabbed {
 
 				grid.addHeader(cat.title());
 				for (Class<?> cls : cat.items()){
-					if (!Item.class.isAssignableFrom(cls)) continue;
-					final Item sample;
-					try {
-						sample = (Item) Reflection.newInstanceUnhandled(cls);
-					} catch (Exception e){
-						continue;
-					}
-					grid.addItem(new ScrollingGridPane.GridItem(new ItemSprite(sample)){
-						@Override
-						public boolean onClick(float x, float y) {
-							if (inside(x, y)){
-								GameScene.show(new WndSpawnItem(cls));
-								return true;
-							}
-							return false;
-						}
-					});
+					addSpawnItem(cls);
 				}
 			}
+		}
+
+		private void addSpawnItem(final Class<?> cls){
+			if (!Item.class.isAssignableFrom(cls)) return;
+			final Item sample;
+			try {
+				sample = (Item) Reflection.newInstanceUnhandled(cls);
+			} catch (Exception e){
+				return;
+			}
+			grid.addItem(new ScrollingGridPane.GridItem(new ItemSprite(sample)){
+				@Override
+				public boolean onClick(float x, float y) {
+					if (inside(x, y)){
+						GameScene.show(new WndSpawnItem(cls));
+						return true;
+					}
+					return false;
+				}
+			});
 		}
 
 		@Override
@@ -648,6 +658,9 @@ public class WndCheat extends WndTabbed {
 			}
 			item.identify(false);
 			item.cursed = false;
+			if (item instanceof Artifact && ((Artifact) item).chargeCap() > 0){
+				((Artifact) item).setCharge(((Artifact) item).chargeCap());
+			}
 			if (enchant != null && canEnchant(item)){
 				item.cursed = applyEnchant(item, enchant);
 			}
@@ -696,6 +709,13 @@ public class WndCheat extends WndTabbed {
 			}
 
 			addBag(hero.belongings.backpack, txt("backpack"));
+
+			for (Item i : hero.belongings){
+				if (i instanceof ArtifactPouch && !((ArtifactPouch) i).contents.isEmpty()){
+					grid.addHeader(Messages.titleCase(i.name()));
+					for (Item c : ((ArtifactPouch) i).contents) addItem(c);
+				}
+			}
 			grid.setRect(x, y, width, height);
 		}
 
@@ -795,6 +815,32 @@ public class WndCheat extends WndTabbed {
 				pos = lvl.bottom() + 2;
 			}
 
+			if (item instanceof Artifact && ((Artifact) item).chargeCap() > 0){
+				final Artifact art = (Artifact) item;
+				NumberRow chg = new NumberRow(txt("charge_max", art.chargeCap())){
+					protected int get(){ return art.getCharge(); }
+					protected void set(int v){ art.setCharge(v); }
+					protected int max(){ return art.chargeCap(); }
+					protected void onChanged(){ super.onChanged(); updateTitle(); }
+				};
+				chg.setRect(0, pos, WIDTH, NumberRow.HEIGHT);
+				add(chg);
+				pos = chg.bottom() + 2;
+			}
+
+			if (item instanceof Wand){
+				final Wand wand = (Wand) item;
+				NumberRow chg = new NumberRow(txt("charge")){
+					protected int get(){ return wand.curCharges; }
+					protected void set(int v){ wand.curCharges = v; }
+					protected int max(){ return 99; }
+					protected void onChanged(){ super.onChanged(); updateTitle(); }
+				};
+				chg.setRect(0, pos, WIDTH, NumberRow.HEIGHT);
+				add(chg);
+				pos = chg.bottom() + 2;
+			}
+
 			if (canEnchant(item)){
 				RedButton ench = new RedButton(enchantButtonText(item, currentEnchant(item)), 7){
 					@Override
@@ -870,7 +916,11 @@ public class WndCheat extends WndTabbed {
 
 		private static void deleteItem(Item item){
 			Hero hero = Dungeon.hero;
-			if (item instanceof EquipableItem && ((EquipableItem) item).isEquipped(hero)){
+			ArtifactPouch holder = ArtifactPouch.findPouchHolding(hero, item);
+			if (holder != null){
+				holder.takeOut(hero, item);
+				item.detachAll(hero.belongings.backpack);
+			} else if (item instanceof EquipableItem && ((EquipableItem) item).isEquipped(hero)){
 				item.cursed = false;
 				((EquipableItem) item).doUnequip(hero, false, false);
 			} else {

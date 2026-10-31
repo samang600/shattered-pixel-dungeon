@@ -133,6 +133,15 @@ public class Ring extends KindofMisc {
 		buff.attachTo( ch );
 	}
 
+	//removes this ring's effects without going through the normal unequip logic
+	// used when the ring is taken out of an equipped ArtifactPouch
+	public void deactivate(){
+		if (buff != null){
+			buff.detach();
+			buff = null;
+		}
+	}
+
 	@Override
 	public boolean doUnequip( Hero hero, boolean collect, boolean single ) {
 		if (super.doUnequip( hero, collect, single )) {
