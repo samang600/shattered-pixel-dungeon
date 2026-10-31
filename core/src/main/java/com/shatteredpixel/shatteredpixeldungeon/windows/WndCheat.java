@@ -108,6 +108,10 @@ public class WndCheat extends WndTabbed {
 		select(lastIdx);
 	}
 
+	private static String txt(String key, Object... args){
+		return Messages.get(WndCheat.class, key, args);
+	}
+
 	private static void afterChange(){
 		Item.updateQuickslot();
 		GameScene.updateItemDisplays = true;
@@ -164,14 +168,14 @@ public class WndCheat extends WndTabbed {
 				@Override
 				protected void onClick() {
 					GameScene.show(new WndTextInput(label.text(), null, Integer.toString(get()),
-							9, false, "OK", "취소"){
+							9, false, "OK", txt("cancel")){
 						@Override
 						public void onSelect(boolean positive, String text) {
 							if (!positive) return;
 							try {
 								apply(Integer.parseInt(text.trim()));
 							} catch (NumberFormatException e){
-								GLog.w("숫자를 입력하세요.");
+								GLog.w(txt("not_number"));
 							}
 						}
 					});
@@ -230,13 +234,13 @@ public class WndCheat extends WndTabbed {
 
 			//note: field initializers run after createChildren, so this must be set here
 			rows = new ArrayList<>();
-			rows.add(new NumberRow("체력"){
+			rows.add(new NumberRow(txt("hp")){
 				protected int get(){ return Dungeon.hero.HP; }
 				protected void set(int v){ Dungeon.hero.HP = v; }
 				protected int min(){ return 1; }
 				protected void onChanged(){ StatsTab.this.refresh(); }
 			});
-			rows.add(new NumberRow("최대 체력"){
+			rows.add(new NumberRow(txt("max_hp")){
 				protected int get(){ return Dungeon.hero.HT; }
 				protected void set(int v){
 					Hero h = Dungeon.hero;
@@ -246,12 +250,12 @@ public class WndCheat extends WndTabbed {
 				protected int min(){ return 1; }
 				protected void onChanged(){ StatsTab.this.refresh(); }
 			});
-			rows.add(new NumberRow("힘"){
+			rows.add(new NumberRow(txt("str")){
 				protected int get(){ return Dungeon.hero.STR; }
 				protected void set(int v){ Dungeon.hero.STR = v; }
 				protected int max(){ return 999; }
 			});
-			rows.add(new NumberRow("레벨"){
+			rows.add(new NumberRow(txt("level")){
 				protected int get(){ return Dungeon.hero.lvl; }
 				protected void set(int v){
 					Hero h = Dungeon.hero;
@@ -263,7 +267,7 @@ public class WndCheat extends WndTabbed {
 				protected int max(){ return Hero.MAX_LEVEL; }
 				protected void onChanged(){ StatsTab.this.refresh(); }
 			});
-			rows.add(new NumberRow("경험치"){
+			rows.add(new NumberRow(txt("exp")){
 				protected int get(){ return Dungeon.hero.exp; }
 				protected void set(int v){
 					Dungeon.hero.exp = 0;
@@ -272,12 +276,12 @@ public class WndCheat extends WndTabbed {
 				}
 				protected void onChanged(){ StatsTab.this.refresh(); }
 			});
-			rows.add(new NumberRow("골드"){
+			rows.add(new NumberRow(txt("gold")){
 				protected int get(){ return Dungeon.gold; }
 				protected void set(int v){ Dungeon.gold = v; }
 				protected int max(){ return 99_999_999; }
 			});
-			rows.add(new NumberRow("연금 에너지"){
+			rows.add(new NumberRow(txt("energy")){
 				protected int get(){ return Dungeon.energy; }
 				protected void set(int v){ Dungeon.energy = v; }
 				protected int max(){ return 99_999_999; }
@@ -287,27 +291,27 @@ public class WndCheat extends WndTabbed {
 				add(r);
 			}
 
-			btnHeal = new RedButton("완전 회복", 7){
+			btnHeal = new RedButton(txt("heal"), 7){
 				@Override
 				protected void onClick() {
 					Hero h = Dungeon.hero;
 					h.HP = h.HT;
 					Hunger hunger = h.buff(Hunger.class);
 					if (hunger != null) hunger.satisfy(Hunger.STARVING);
-					h.sprite.showStatus(0x00FF00, "회복!");
+					h.sprite.showStatus(0x00FF00, txt("healed"));
 					afterChange();
 					StatsTab.this.refresh();
 				}
 			};
 			add(btnHeal);
 
-			btnIdentify = new RedButton("전체 감정", 7){
+			btnIdentify = new RedButton(txt("identify_all"), 7){
 				@Override
 				protected void onClick() {
 					for (Item i : Dungeon.hero.belongings){
 						i.identify();
 					}
-					GLog.p("소지품을 모두 감정했습니다.");
+					GLog.p(txt("identified_all"));
 					afterChange();
 				}
 			};
@@ -348,8 +352,8 @@ public class WndCheat extends WndTabbed {
 			grid = new ScrollingGridPane();
 			add(grid);
 
-			grid.addHeader("_아이템 생성_", 9, true);
-			grid.addHeader("아이템을 눌러 개수/강화 수치를 정하고 지급합니다.", 6, true);
+			grid.addHeader("_" + txt("spawn_title") + "_", 9, true);
+			grid.addHeader(txt("spawn_desc"), 6, true);
 
 			ArrayList<Catalog> cats = new ArrayList<>(Catalog.equipmentCatalogs);
 			cats.addAll(Catalog.consumableCatalogs);
@@ -406,7 +410,7 @@ public class WndCheat extends WndTabbed {
 			float pos = title.bottom() + 4;
 
 			if (preview.stackable || preview instanceof Gold || preview instanceof EnergyCrystal){
-				NumberRow qty = new NumberRow("개수"){
+				NumberRow qty = new NumberRow(txt("quantity")){
 					protected int get(){ return quantity; }
 					protected void set(int v){ quantity = v; }
 					protected int min(){ return 1; }
@@ -417,7 +421,7 @@ public class WndCheat extends WndTabbed {
 			}
 
 			if (preview.isUpgradable()){
-				NumberRow lvl = new NumberRow("강화"){
+				NumberRow lvl = new NumberRow(txt("upgrade")){
 					protected int get(){ return level; }
 					protected void set(int v){ level = v; }
 					protected int min(){ return -10; }
@@ -428,7 +432,7 @@ public class WndCheat extends WndTabbed {
 				pos = lvl.bottom() + 2;
 			}
 
-			RedButton give = new RedButton("지급하기"){
+			RedButton give = new RedButton(txt("give")){
 				@Override
 				protected void onClick() {
 					giveItem(cls, quantity, level);
@@ -447,12 +451,12 @@ public class WndCheat extends WndTabbed {
 
 			if (item instanceof Gold){
 				Dungeon.gold += quantity;
-				GLog.p("골드 %d 획득", quantity);
+				GLog.p(txt("got_gold", quantity));
 				afterChange();
 				return;
 			} else if (item instanceof EnergyCrystal){
 				Dungeon.energy += quantity;
-				GLog.p("연금 에너지 %d 획득", quantity);
+				GLog.p(txt("got_energy", quantity));
 				afterChange();
 				return;
 			}
@@ -468,9 +472,9 @@ public class WndCheat extends WndTabbed {
 
 			if (!item.collect()){
 				Dungeon.level.drop(item, hero.pos).sprite.drop();
-				GLog.w("가방이 가득 차서 바닥에 떨어졌습니다.");
+				GLog.w(txt("bag_full"));
 			}
-			GLog.p("%s 획득", item.name());
+			GLog.p(txt("got_item", item.name()));
 			afterChange();
 		}
 	}
@@ -492,8 +496,8 @@ public class WndCheat extends WndTabbed {
 
 		public void refresh(){
 			grid.clear();
-			grid.addHeader("_소지품 편집_", 9, true);
-			grid.addHeader("아이템을 눌러 개수, 강화, 저주 등을 수정합니다.", 6, true);
+			grid.addHeader("_" + txt("inv_title") + "_", 9, true);
+			grid.addHeader(txt("inv_desc"), 6, true);
 
 			Hero hero = Dungeon.hero;
 			ArrayList<Item> equipped = new ArrayList<>();
@@ -505,11 +509,11 @@ public class WndCheat extends WndTabbed {
 			if (hero.belongings.secondWep != null)  equipped.add(hero.belongings.secondWep);
 
 			if (!equipped.isEmpty()){
-				grid.addHeader("장착 중");
+				grid.addHeader(txt("equipped"));
 				for (Item i : equipped) addItem(i);
 			}
 
-			addBag(hero.belongings.backpack, "가방");
+			addBag(hero.belongings.backpack, txt("backpack"));
 			grid.setRect(x, y, width, height);
 		}
 
@@ -584,7 +588,7 @@ public class WndCheat extends WndTabbed {
 			float pos = title.bottom() + 4;
 
 			if (item.stackable){
-				NumberRow qty = new NumberRow("개수"){
+				NumberRow qty = new NumberRow(txt("quantity")){
 					protected int get(){ return item.quantity(); }
 					protected void set(int v){ item.quantity(v); }
 					protected int min(){ return 1; }
@@ -596,7 +600,7 @@ public class WndCheat extends WndTabbed {
 			}
 
 			if (item.isUpgradable()){
-				NumberRow lvl = new NumberRow("강화"){
+				NumberRow lvl = new NumberRow(txt("upgrade")){
 					protected int get(){ return item.level(); }
 					protected void set(int v){
 						item.level(v);
@@ -613,7 +617,7 @@ public class WndCheat extends WndTabbed {
 
 			float bw = (WIDTH - 2) / 2f;
 
-			RedButton identify = new RedButton("감정", 7){
+			RedButton identify = new RedButton(txt("identify"), 7){
 				@Override
 				protected void onClick() {
 					item.identify();
@@ -624,12 +628,12 @@ public class WndCheat extends WndTabbed {
 			identify.setRect(0, pos + 2, bw, 18);
 			add(identify);
 
-			RedButton curse = new RedButton(item.cursed ? "저주 해제" : "저주 걸기", 7){
+			RedButton curse = new RedButton(item.cursed ? txt("uncurse") : txt("curse"), 7){
 				@Override
 				protected void onClick() {
 					item.cursed = !item.cursed;
 					item.cursedKnown = true;
-					text(item.cursed ? "저주 해제" : "저주 걸기");
+					text(item.cursed ? txt("uncurse") : txt("curse"));
 					afterChange();
 					updateTitle();
 				}
@@ -639,7 +643,7 @@ public class WndCheat extends WndTabbed {
 
 			pos = curse.bottom() + 2;
 
-			RedButton delete = new RedButton("삭제", 7){
+			RedButton delete = new RedButton(txt("delete"), 7){
 				@Override
 				protected void onClick() {
 					deleteItem(item);
@@ -665,7 +669,7 @@ public class WndCheat extends WndTabbed {
 			} else {
 				item.detachAll(hero.belongings.backpack);
 			}
-			GLog.i("%s 삭제됨", item.name());
+			GLog.i(txt("deleted", item.name()));
 			afterChange();
 		}
 	}
