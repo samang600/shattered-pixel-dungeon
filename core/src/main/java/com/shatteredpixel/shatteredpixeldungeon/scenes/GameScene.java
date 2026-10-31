@@ -96,6 +96,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.ActionIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Banner;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
+import com.shatteredpixel.shatteredpixeldungeon.ui.CheatButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.CharHealthIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.GameLog;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
@@ -560,6 +561,12 @@ public class GameScene extends PixelScene {
 			blocker.camera = uiCamera;
 			add(blocker);
 		}
+
+		//floating cheat menu button, can be dragged anywhere
+		CheatButton cheatButton = new CheatButton();
+		cheatButton.camera = uiCamera;
+		add(cheatButton);
+		cheatButton.placeDefault();
 
 		layoutTags();
 
