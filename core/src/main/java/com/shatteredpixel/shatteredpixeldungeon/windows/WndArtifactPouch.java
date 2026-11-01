@@ -27,7 +27,9 @@ import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.ArtifactPouch;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ItemButton;
+import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
@@ -137,7 +139,45 @@ public class WndArtifactPouch extends Window {
 					GameScene.show( new WndArtifactPouch( pouch ) );
 				}
 			};
-			btnTake.setRect( 0, height + 2, width, 16 );
+			float bw = (width - 1) / 2f;
+
+			//quickslot assignment, since the normal quickslot picker only shows the backpack
+			final boolean slotted = Dungeon.quickslot.contains( item );
+			RedButton btnQuick = new RedButton( Messages.get( WndArtifactPouch.class,
+					slotted ? "quickslot_remove" : "quickslot_add" ), 8 ){
+				@Override
+				protected void onClick() {
+					hide();
+					if (slotted){
+						Dungeon.quickslot.clearItem( item );
+						Item.updateQuickslot();
+						GameScene.show( new WndArtifactPouch( pouch ) );
+						if (owner.parent != null) owner.hide();
+						return;
+					}
+					int slots = Math.max(1, QuickSlotButton.lastVisible);
+					String[] options = new String[slots];
+					for (int i = 0; i < slots; i++){
+						Item cur = Dungeon.quickslot.getItem( i );
+						options[i] = (i+1) + ": " + (cur == null ? "---" : Messages.titleCase( cur.name() ));
+					}
+					GameScene.show( new WndOptions( new ItemSprite( item ),
+							Messages.titleCase( item.name() ),
+							Messages.get( WndArtifactPouch.class, "quickslot_prompt" ),
+							options ){
+						@Override
+						protected void onSelect( int index ) {
+							QuickSlotButton.set( index, item );
+							GLog.i( Messages.get( WndArtifactPouch.class, "quickslot_set", item.name(), index+1 ) );
+						}
+					});
+				}
+			};
+			btnQuick.enable( slotted || item.defaultAction() != null );
+			btnQuick.setRect( 0, height + 2, bw, 16 );
+			add( btnQuick );
+
+			btnTake.setRect( bw + 1, height + 2, bw, 16 );
 			add( btnTake );
 
 			resize( width, (int)btnTake.bottom() );
