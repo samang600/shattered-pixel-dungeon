@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.windows;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.CheatBuffs;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hunger;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.EnergyCrystal;
@@ -43,6 +44,10 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
+import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIcon;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
@@ -51,6 +56,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollingListPane;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.BitmapText;
+import com.watabou.noosa.Image;
 import com.watabou.noosa.ui.Component;
 import com.watabou.utils.Reflection;
 
@@ -67,6 +73,7 @@ public class WndCheat extends WndTabbed {
 	private StatsTab stats;
 	private SpawnTab spawn;
 	private InventoryTab inventory;
+	private BuffsTab buffs;
 
 	public WndCheat() {
 		super();
@@ -84,6 +91,10 @@ public class WndCheat extends WndTabbed {
 		inventory = new InventoryTab();
 		add(inventory);
 		inventory.setRect(0, 0, WIDTH, HEIGHT);
+
+		buffs = new BuffsTab();
+		add(buffs);
+		buffs.setRect(0, 0, WIDTH, HEIGHT);
 
 		add(new IconTab(Icons.get(Icons.STATS)) {
 			protected void select(boolean value) {
@@ -110,6 +121,16 @@ public class WndCheat extends WndTabbed {
 					inventory.refresh();
 				}
 				inventory.visible = inventory.active = selected;
+			}
+		});
+		add(new IconTab(Icons.get(Icons.BUFFS)) {
+			protected void select(boolean value) {
+				super.select(value);
+				if (selected) {
+					lastIdx = 3;
+					buffs.refresh();
+				}
+				buffs.visible = buffs.active = selected;
 			}
 		});
 
@@ -270,6 +291,28 @@ public class WndCheat extends WndTabbed {
 		}
 
 		protected abstract void onPick(Class<?> cls);
+	}
+
+	//title of an item as if its type were identified (for unidentified potions, scrolls and rings)
+	public static String knownTitle(Item item){
+		String title = item.title();
+		String name = item.name();
+		String trueName = item.trueName();
+		if (!name.equals(trueName) && title.contains(name)){
+			title = title.replace(name, trueName);
+		}
+		return Messages.titleCase(title);
+	}
+
+	//description of an unidentified potion/scroll/ring type, or null if not needed
+	public static String unknownTypeDesc(Item item){
+		boolean unknown = (item instanceof Potion && !((Potion) item).isKnown())
+				|| (item instanceof Scroll && !((Scroll) item).isKnown())
+				|| (item instanceof Ring && !((Ring) item).isKnown());
+		if (!unknown) return null;
+		String desc = Messages.get(item, "desc");
+		if (desc == null || desc.contains("%") || desc.equals(Messages.NO_TEXT_FOUND)) return null;
+		return desc;
 	}
 
 	private static void afterChange(){
@@ -572,10 +615,20 @@ public class WndCheat extends WndTabbed {
 			final Item preview = (Item) Reflection.newInstance(cls);
 
 			IconTitle title = new IconTitle(preview);
+			title.label(knownTitle(preview));
 			title.setRect(0, 0, WIDTH, 0);
 			add(title);
 
 			float pos = title.bottom() + 4;
+
+			String typeDesc = unknownTypeDesc(preview);
+			if (typeDesc != null){
+				RenderedTextBlock desc = PixelScene.renderTextBlock(typeDesc, 6);
+				desc.maxWidth(WIDTH);
+				desc.setPos(0, pos);
+				add(desc);
+				pos = desc.bottom() + 4;
+			}
 
 			if (preview.stackable || preview instanceof Gold || preview instanceof EnergyCrystal){
 				NumberRow qty = new NumberRow(txt("quantity")){
@@ -785,6 +838,7 @@ public class WndCheat extends WndTabbed {
 			this.item = item;
 
 			title = new IconTitle(item);
+			title.label(knownTitle(item));
 			title.setRect(0, 0, WIDTH, 0);
 			add(title);
 
@@ -911,7 +965,7 @@ public class WndCheat extends WndTabbed {
 
 		private void updateTitle(){
 			title.icon(new ItemSprite(item));
-			title.label(item.title());
+			title.label(knownTitle(item));
 		}
 
 		private static void deleteItem(Item item){
@@ -929,5 +983,203 @@ public class WndCheat extends WndTabbed {
 			GLog.i(txt("deleted", item.name()));
 			afterChange();
 		}
+	}
+
+	//*****************************
+	// Status effects tab
+	//*****************************
+
+	private static int lastTurns = 10;
+
+	private static Image buffIcon(Buff b){
+		try {
+			return new BuffIcon(b, true);
+		} catch (Exception e){
+			return Icons.get(Icons.BUFFS);
+		}
+	}
+
+	private static String buffName(Buff b){
+		try {
+			String n = b.name();
+			if (n != null && !n.equals(Messages.NO_TEXT_FOUND)) return Messages.titleCase(n);
+		} catch (Exception ignored){ }
+		return b.getClass().getSimpleName();
+	}
+
+	private class BuffsTab extends Component {
+
+		private ScrollingListPane list;
+		private RedButton btnClearDebuffs;
+
+		@Override
+		protected void createChildren() {
+			super.createChildren();
+			list = new ScrollingListPane();
+			add(list);
+
+			btnClearDebuffs = new RedButton(txt("clear_debuffs"), 7){
+				@Override
+				protected void onClick() {
+					Hero hero = Dungeon.hero;
+					for (Buff b : hero.buffs()){
+						if (b.type == Buff.buffType.NEGATIVE && CheatBuffs.isVisible(b)){
+							CheatBuffs.remove(hero, b.getClass());
+						}
+					}
+					afterChange();
+					BuffsTab.this.refresh();
+				}
+			};
+			add(btnClearDebuffs);
+		}
+
+		private void addEntry(final Class<? extends Buff> cls, Buff shown, String suffix){
+			ScrollingListPane.ListItem item = new ScrollingListPane.ListItem(buffIcon(shown), buffName(shown) + suffix){
+				@Override
+				public boolean onClick(float x, float y) {
+					if (inside(x, y)){
+						GameScene.show(new WndBuffEdit(cls){
+							@Override
+							protected void onChanged() {
+								BuffsTab.this.refresh();
+							}
+						});
+						return true;
+					}
+					return false;
+				}
+			};
+			item.setSize(width, 18);
+			list.addItem(item);
+		}
+
+		public void refresh(){
+			list.clear();
+			Hero hero = Dungeon.hero;
+
+			list.addTitle(txt("buffs_active"));
+			boolean any = false;
+			for (Buff b : hero.buffs()){
+				if (!CheatBuffs.isVisible(b)) continue;
+				any = true;
+				String suffix = CheatBuffs.isPermanent(hero, b.getClass()) ? " " + txt("permanent_tag") : "";
+				addEntry(b.getClass(), b, suffix);
+			}
+			if (!any){
+				list.addTitle(txt("buffs_none"));
+			}
+
+			String[] titles = {txt("buffs_positive"), txt("buffs_negative")};
+			Buff.buffType[] types = {Buff.buffType.POSITIVE, Buff.buffType.NEGATIVE};
+			for (int t = 0; t < types.length; t++){
+				list.addTitle(titles[t]);
+				for (CheatBuffs.Entry e : CheatBuffs.ENTRIES){
+					Buff sample = e.sample();
+					if (sample == null || sample.type != types[t]) continue;
+					addEntry(e.cls, sample, "");
+				}
+			}
+			layout();
+		}
+
+		@Override
+		protected void layout() {
+			super.layout();
+			list.setRect(x, y, width, height - 20);
+			btnClearDebuffs.setRect(x, y + height - 18, width, 18);
+		}
+	}
+
+	public static class WndBuffEdit extends Window {
+
+		private static final int WIDTH = 140;
+
+		public WndBuffEdit(final Class<? extends Buff> cls){
+			super();
+			final Hero hero = Dungeon.hero;
+			final CheatBuffs.Entry entry = CheatBuffs.find(cls);
+
+			Buff shown = hero.buff(cls);
+			if (shown == null) shown = entry != null ? entry.sample() : Reflection.newInstance(cls);
+
+			IconTitle title = new IconTitle(buffIcon(shown), buffName(shown));
+			title.setRect(0, 0, WIDTH, 0);
+			add(title);
+			float pos = title.bottom() + 3;
+
+			String state;
+			if (CheatBuffs.isPermanent(hero, cls))  state = txt("state_permanent");
+			else if (hero.buff(cls) != null)        state = txt("state_active");
+			else                                    state = txt("state_inactive");
+			RenderedTextBlock info = PixelScene.renderTextBlock(state, 6);
+			info.maxWidth(WIDTH);
+			info.setPos(0, pos);
+			add(info);
+			pos = info.bottom() + 4;
+
+			if (entry != null){
+				NumberRow turns = new NumberRow(txt("turns")){
+					protected int get(){ return lastTurns; }
+					protected void set(int v){ lastTurns = v; }
+					protected int min(){ return 1; }
+					protected int max(){ return 9999; }
+				};
+				turns.setRect(0, pos, WIDTH, NumberRow.HEIGHT);
+				add(turns);
+				pos = turns.bottom() + 3;
+
+				float bw = (WIDTH - 2) / 2f;
+				RedButton give = new RedButton(txt("apply_turns"), 7){
+					@Override
+					protected void onClick() {
+						try {
+							entry.apply(hero, lastTurns);
+						} catch (Exception e){
+							GLog.w(e.toString());
+						}
+						done();
+					}
+				};
+				give.setRect(0, pos, bw, 18);
+				add(give);
+
+				RedButton perm = new RedButton(txt("apply_permanent"), 7){
+					@Override
+					protected void onClick() {
+						try {
+							CheatBuffs.makePermanent(hero, entry);
+						} catch (Exception e){
+							GLog.w(e.toString());
+						}
+						done();
+					}
+				};
+				perm.setRect(bw + 2, pos, bw, 18);
+				add(perm);
+				pos = perm.bottom() + 2;
+			}
+
+			RedButton remove = new RedButton(txt("remove_buff"), 7){
+				@Override
+				protected void onClick() {
+					CheatBuffs.remove(hero, cls);
+					done();
+				}
+			};
+			remove.enable(hero.buff(cls) != null || CheatBuffs.isPermanent(hero, cls));
+			remove.setRect(0, pos, WIDTH, 18);
+			add(remove);
+
+			resize(WIDTH, (int)remove.bottom());
+		}
+
+		private void done(){
+			afterChange();
+			hide();
+			onChanged();
+		}
+
+		protected void onChanged(){}
 	}
 }
