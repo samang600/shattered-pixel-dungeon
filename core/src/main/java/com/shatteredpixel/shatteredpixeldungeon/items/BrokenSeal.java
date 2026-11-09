@@ -184,7 +184,20 @@ public class BrokenSeal extends Item {
 
 	@Override
 	public String name() {
-		return glyph != null ? glyph.name( super.name() ) : super.name();
+		String base = super.name();
+		//for Artoria the seal is Avalon, the scabbard of Excalibur
+		if (Dungeon.hero != null && Dungeon.hero.heroClass == HeroClass.ARTORIA){
+			base = Messages.get(this, "avalon_name");
+		}
+		return glyph != null ? glyph.name( base ) : base;
+	}
+
+	@Override
+	public String desc() {
+		if (Dungeon.hero != null && Dungeon.hero.heroClass == HeroClass.ARTORIA){
+			return Messages.get(this, "avalon_desc") + "\n\n" + super.desc();
+		}
+		return super.desc();
 	}
 
 	@Override
@@ -366,7 +379,7 @@ public class BrokenSeal extends Item {
 
 		public synchronized int maxShield() {
 			//metamorphed iron will logic
-			if (((Hero)target).heroClass != HeroClass.WARRIOR && ((Hero) target).hasTalent(Talent.IRON_WILL)){
+			if (!((Hero)target).heroClass.isSealBearer() && ((Hero) target).hasTalent(Talent.IRON_WILL)){
 				return ((Hero) target).pointsInTalent(Talent.IRON_WILL);
 			}
 

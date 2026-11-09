@@ -54,7 +54,7 @@ public class HoldFast extends Buff {
 	public int armorBonus(){
 		if (pos == target.pos && target instanceof Hero){
 			int max = 0;
-			if (((Hero) target).heroClass == HeroClass.WARRIOR){
+			if (((Hero) target).heroClass.isSealBearer()){
 				max = 6;
 			} else {
 				Armor armor = ((Hero) target).belongings.armor();

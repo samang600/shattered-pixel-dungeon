@@ -70,6 +70,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfMagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Cudgel;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Excalibur;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Dagger;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Gloves;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
@@ -89,7 +90,13 @@ public enum HeroClass {
 	ROGUE( HeroSubClass.ASSASSIN, HeroSubClass.FREERUNNER ),
 	HUNTRESS( HeroSubClass.SNIPER, HeroSubClass.WARDEN ),
 	DUELIST( HeroSubClass.CHAMPION, HeroSubClass.MONK ),
-	CLERIC( HeroSubClass.PRIEST, HeroSubClass.PALADIN );
+	CLERIC( HeroSubClass.PRIEST, HeroSubClass.PALADIN ),
+	ARTORIA( HeroSubClass.BERSERKER, HeroSubClass.GLADIATOR );
+
+	//classes that start with the broken seal and use the warrior's seal mechanics
+	public boolean isSealBearer(){
+		return this == WARRIOR || this == ARTORIA;
+	}
 
 	private HeroSubClass[] subClasses;
 
@@ -140,6 +147,10 @@ public enum HeroClass {
 			case CLERIC:
 				initCleric( hero );
 				break;
+
+			case ARTORIA:
+				initArtoria( hero );
+				break;
 		}
 
 		if (SPDSettings.quickslotWaterskin()) {
@@ -167,6 +178,8 @@ public enum HeroClass {
 				return Badges.Badge.MASTERY_DUELIST;
 			case CLERIC:
 				return Badges.Badge.MASTERY_CLERIC;
+			case ARTORIA:
+				return Badges.Badge.MASTERY_WARRIOR;
 		}
 		return null;
 	}
@@ -260,6 +273,27 @@ public enum HeroClass {
 		new ScrollOfRemoveCurse().identify();
 	}
 
+	private static void initArtoria( Hero hero ) {
+		Excalibur sword = new Excalibur();
+		(hero.belongings.weapon = sword).identify();
+		hero.belongings.weapon.activate(hero);
+
+		//Avalon: the warrior's seal, presented as the legendary scabbard
+		if (hero.belongings.armor != null){
+			hero.belongings.armor.affixSeal(new BrokenSeal());
+			Catalog.setSeen(BrokenSeal.class);
+		}
+
+		ThrowingStone stones = new ThrowingStone();
+		stones.identify().collect();
+
+		Dungeon.quickslot.setSlot(0, sword);
+		Dungeon.quickslot.setSlot(1, stones);
+
+		new PotionOfHealing().identify();
+		new ScrollOfUpgrade().identify();
+	}
+
 	public String title() {
 		return Messages.get(HeroClass.class, name());
 	}
@@ -290,6 +324,8 @@ public enum HeroClass {
 				return new ArmorAbility[]{new Challenge(), new ElementalStrike(), new Feint()};
 			case CLERIC:
 				return new ArmorAbility[]{new AscendedForm(), new Trinity(), new PowerOfMany()};
+			case ARTORIA:
+				return new ArmorAbility[]{new HeroicLeap(), new Shockwave(), new Endure()};
 		}
 	}
 
@@ -307,6 +343,8 @@ public enum HeroClass {
 				return Assets.Sprites.DUELIST;
 			case CLERIC:
 				return Assets.Sprites.CLERIC;
+			case ARTORIA:
+				return Assets.Sprites.ARTORIA;
 		}
 	}
 
@@ -324,6 +362,8 @@ public enum HeroClass {
 				return Assets.Splashes.DUELIST;
 			case CLERIC:
 				return Assets.Splashes.CLERIC;
+			case ARTORIA:
+				return Assets.Splashes.ARTORIA;
 		}
 	}
 	

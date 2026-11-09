@@ -70,7 +70,7 @@ public class VaultMirror extends NPC {
 		//we create a new generator here as some heroes call RNG here and some don't
 		Random.pushGenerator(Random.Long());
 			switch (cls) {
-				case WARRIOR:
+				case WARRIOR: case ARTORIA:
 					reward = new BrokenSeal().upgrade().identify(false);
 					((BrokenSeal)reward).setGlyph(Armor.Glyph.random());
 					break;
@@ -108,7 +108,7 @@ public class VaultMirror extends NPC {
 
 						String sceneText = Messages.get(VaultMirror.class, "approach") + "\n\n";
 						switch (((Hero) c).heroClass){
-							case WARRIOR:
+							case WARRIOR: case ARTORIA:
 								sceneText += Messages.get(VaultMirror.class, "scene_warrior");
 								break;
 							case MAGE:

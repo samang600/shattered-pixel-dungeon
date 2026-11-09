@@ -496,7 +496,7 @@ public enum Talent {
 
 	public static void onTalentUpgraded( Hero hero, Talent talent ){
 		//for metamorphosis
-		if (talent == IRON_WILL && hero.heroClass != HeroClass.WARRIOR){
+		if (talent == IRON_WILL && !hero.heroClass.isSealBearer()){
 			Buff.affect(hero, BrokenSeal.WarriorShield.class);
 		}
 
