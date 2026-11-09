@@ -413,9 +413,11 @@ public class ItemSpriteSheet {
 	public static final int WAND_WARDING        = WANDS+10;
 	public static final int WAND_REGROWTH       = WANDS+11;
 	public static final int WAND_TRANSFUSION    = WANDS+12;
+	public static final int LIMITLESS           = WANDS+13; //gojo's blindfold
 	static {
 		for (int i = WANDS; i < WANDS+16; i++)
 			assignItemRect(i, 14, 14);
+		assignItemRect(LIMITLESS, 16, 16);
 	}
 
 	private static final int RINGS          =                               xy(1, 15);  //16 slots

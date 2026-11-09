@@ -71,6 +71,8 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfMagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Cudgel;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Excalibur;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Limitless;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Dagger;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Gloves;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
@@ -91,7 +93,13 @@ public enum HeroClass {
 	HUNTRESS( HeroSubClass.SNIPER, HeroSubClass.WARDEN ),
 	DUELIST( HeroSubClass.CHAMPION, HeroSubClass.MONK ),
 	CLERIC( HeroSubClass.PRIEST, HeroSubClass.PALADIN ),
-	ARTORIA( HeroSubClass.BERSERKER, HeroSubClass.GLADIATOR );
+	ARTORIA( HeroSubClass.BERSERKER, HeroSubClass.GLADIATOR ),
+	GOJO( HeroSubClass.CHAMPION, HeroSubClass.MONK );
+
+	//classes that can use the special abilities of melee weapons
+	public boolean isWeaponMaster(){
+		return this == DUELIST || this == GOJO;
+	}
 
 	//classes that start with the broken seal and use the warrior's seal mechanics
 	public boolean isSealBearer(){
@@ -151,6 +159,10 @@ public enum HeroClass {
 			case ARTORIA:
 				initArtoria( hero );
 				break;
+
+			case GOJO:
+				initGojo( hero );
+				break;
 		}
 
 		if (SPDSettings.quickslotWaterskin()) {
@@ -180,6 +192,8 @@ public enum HeroClass {
 				return Badges.Badge.MASTERY_CLERIC;
 			case ARTORIA:
 				return Badges.Badge.MASTERY_WARRIOR;
+			case GOJO:
+				return Badges.Badge.MASTERY_DUELIST;
 		}
 		return null;
 	}
@@ -294,6 +308,21 @@ public enum HeroClass {
 		new ScrollOfUpgrade().identify();
 	}
 
+	private static void initGojo( Hero hero ) {
+		(hero.belongings.weapon = new Gloves()).identify();
+		hero.belongings.weapon.activate(hero);
+
+		Limitless blindfold = new Limitless();
+		(hero.belongings.artifact = blindfold).identify();
+		hero.belongings.artifact.activate( hero );
+
+		Dungeon.quickslot.setSlot(0, blindfold);
+		Dungeon.quickslot.setSlot(1, hero.belongings.weapon);
+
+		new PotionOfMindVision().identify();
+		new ScrollOfTeleportation().identify();
+	}
+
 	public String title() {
 		return Messages.get(HeroClass.class, name());
 	}
@@ -326,6 +355,8 @@ public enum HeroClass {
 				return new ArmorAbility[]{new AscendedForm(), new Trinity(), new PowerOfMany()};
 			case ARTORIA:
 				return new ArmorAbility[]{new HeroicLeap(), new Shockwave(), new Endure()};
+			case GOJO:
+				return new ArmorAbility[]{new Challenge(), new ElementalStrike(), new Feint()};
 		}
 	}
 
@@ -345,6 +376,8 @@ public enum HeroClass {
 				return Assets.Sprites.CLERIC;
 			case ARTORIA:
 				return Assets.Sprites.ARTORIA;
+			case GOJO:
+				return Assets.Sprites.GOJO;
 		}
 	}
 
@@ -364,6 +397,8 @@ public enum HeroClass {
 				return Assets.Splashes.CLERIC;
 			case ARTORIA:
 				return Assets.Splashes.ARTORIA;
+			case GOJO:
+				return Assets.Splashes.GOJO;
 		}
 	}
 	

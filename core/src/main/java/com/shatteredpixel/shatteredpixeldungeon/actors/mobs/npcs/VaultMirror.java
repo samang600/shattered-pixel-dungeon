@@ -86,7 +86,7 @@ public class VaultMirror extends NPC {
 					reward = new SpiritBow().identify(false);
 					((SpiritBow)reward).enchant();
 					break;
-				case DUELIST:
+				case DUELIST: case GOJO:
 					reward = new MirrorSword().upgrade(3).identify(false);
 					((MeleeWeapon)reward).enchant();
 					break;
@@ -120,7 +120,7 @@ public class VaultMirror extends NPC {
 							case HUNTRESS:
 								sceneText += Messages.get(VaultMirror.class, "scene_huntress");
 								break;
-							case DUELIST:
+							case DUELIST: case GOJO:
 								sceneText += Messages.get(VaultMirror.class, "scene_duelist");
 								break;
 							case CLERIC:

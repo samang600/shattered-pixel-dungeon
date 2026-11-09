@@ -212,7 +212,7 @@ public class ScrollOfMetamorphosis extends ExoticScroll {
 
 			for (HeroClass cls : HeroClass.values()){
 				//artoria shares the warrior's talents, don't offer them twice
-				if (cls == HeroClass.ARTORIA) continue;
+				if (cls == HeroClass.ARTORIA || cls == HeroClass.GOJO) continue;
 
 				ArrayList<LinkedHashMap<Talent, Integer>> clsTalents = new ArrayList<>();
 				Talent.initClassTalents(cls, clsTalents);

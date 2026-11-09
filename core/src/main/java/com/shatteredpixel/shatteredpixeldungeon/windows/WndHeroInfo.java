@@ -79,6 +79,9 @@ public class WndHeroInfo extends WndTabbed {
 			case ARTORIA:
 				tabIcon = new ItemSprite(ItemSpriteSheet.EXCALIBUR, null);
 				break;
+			case GOJO:
+				tabIcon = new ItemSprite(ItemSpriteSheet.LIMITLESS, null);
+				break;
 		}
 
 		int finalHeight = MIN_HEIGHT;
@@ -214,6 +217,12 @@ public class WndHeroInfo extends WndTabbed {
 					icons = new Image[]{ new ItemSprite(ItemSpriteSheet.EXCALIBUR),
 							new ItemSprite(ItemSpriteSheet.SEAL),
 							new ItemSprite(ItemSpriteSheet.THROWING_STONE),
+							new ItemSprite(ItemSpriteSheet.SCROLL_ISAZ)};
+					break;
+				case GOJO:
+					icons = new Image[]{ new ItemSprite(ItemSpriteSheet.LIMITLESS),
+							Icons.get(Icons.MAGNIFY),
+							new ItemSprite(ItemSpriteSheet.GLOVES),
 							new ItemSprite(ItemSpriteSheet.SCROLL_ISAZ)};
 					break;
 			}

@@ -67,14 +67,14 @@ public class MeleeWeapon extends Weapon {
 	@Override
 	public void activate(Char ch) {
 		super.activate(ch);
-		if (ch instanceof Hero && ((Hero) ch).heroClass == HeroClass.DUELIST){
+		if (ch instanceof Hero && ((Hero) ch).heroClass.isWeaponMaster()){
 			Buff.affect(ch, Charger.class);
 		}
 	}
 
 	@Override
 	public String defaultAction() {
-		if (Dungeon.hero != null && (Dungeon.hero.heroClass == HeroClass.DUELIST
+		if (Dungeon.hero != null && (Dungeon.hero.heroClass.isWeaponMaster()
 			|| Dungeon.hero.hasTalent(Talent.SWIFT_EQUIP))){
 			return AC_ABILITY;
 		} else {
@@ -85,7 +85,7 @@ public class MeleeWeapon extends Weapon {
 	@Override
 	public ArrayList<String> actions(Hero hero) {
 		ArrayList<String> actions = super.actions(hero);
-		if (isEquipped(hero) && hero.heroClass == HeroClass.DUELIST){
+		if (isEquipped(hero) && hero.heroClass.isWeaponMaster()){
 			actions.add(AC_ABILITY);
 		}
 		return actions;
@@ -111,13 +111,13 @@ public class MeleeWeapon extends Weapon {
 					if (hero.buff(Talent.SwiftEquipCooldown.class) == null
 						|| hero.buff(Talent.SwiftEquipCooldown.class).hasSecondUse()){
 						execute(hero, AC_EQUIP);
-					} else if (hero.heroClass == HeroClass.DUELIST) {
+					} else if (hero.heroClass.isWeaponMaster()) {
 						GLog.w(Messages.get(this, "ability_need_equip"));
 					}
-				} else if (hero.heroClass == HeroClass.DUELIST) {
+				} else if (hero.heroClass.isWeaponMaster()) {
 					GLog.w(Messages.get(this, "ability_need_equip"));
 				}
-			} else if (hero.heroClass != HeroClass.DUELIST){
+			} else if (!hero.heroClass.isWeaponMaster()){
 				//do nothing
 			} else if (STRReq() > hero.STR()){
 				GLog.w(Messages.get(this, "ability_low_str"));
@@ -177,7 +177,7 @@ public class MeleeWeapon extends Weapon {
 			charger.partialCharge++;
 		}
 
-		if (hero.heroClass == HeroClass.DUELIST
+		if (hero.heroClass.isWeaponMaster()
 				&& hero.hasTalent(Talent.AGGRESSIVE_BARRIER)
 				&& (hero.HP / (float)hero.HT) <= 0.5f){
 			int shieldAmt = 1 + 2*hero.pointsInTalent(Talent.AGGRESSIVE_BARRIER);
@@ -362,7 +362,7 @@ public class MeleeWeapon extends Weapon {
 		}
 
 		//the mage's staff has no ability as it can only be gained by the mage
-		if (Dungeon.hero != null && Dungeon.hero.heroClass == HeroClass.DUELIST && !(this instanceof MagesStaff)){
+		if (Dungeon.hero != null && Dungeon.hero.heroClass.isWeaponMaster() && !(this instanceof MagesStaff)){
 			info += "\n\n" + abilityInfo();
 		}
 		

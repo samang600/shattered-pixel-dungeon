@@ -481,6 +481,8 @@ public enum Icons {
 				return new ItemSprite(ItemSpriteSheet.ARTIFACT_TOME);
 			case ARTORIA:
 				return new ItemSprite(ItemSpriteSheet.EXCALIBUR);
+			case GOJO:
+				return new ItemSprite(ItemSpriteSheet.LIMITLESS);
 			default:
 				return null;
 		}
