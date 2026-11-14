@@ -459,7 +459,7 @@ public enum Talent {
 					return 90;
 				case HUNTRESS:
 					return 122;
-				case DUELIST: case GOJO:
+				case DUELIST: case GOJO: case PIKACHU:
 					return 154;
 				case CLERIC:
 					return 186;
@@ -988,7 +988,7 @@ public enum Talent {
 			case HUNTRESS:
 				Collections.addAll(tierTalents, NATURES_BOUNTY, SURVIVALISTS_INTUITION, FOLLOWUP_STRIKE, NATURES_AID);
 				break;
-			case DUELIST: case GOJO:
+			case DUELIST: case GOJO: case PIKACHU:
 				Collections.addAll(tierTalents, STRENGTHENING_MEAL, ADVENTURERS_INTUITION, PATIENT_STRIKE, AGGRESSIVE_BARRIER);
 				break;
 			case CLERIC:
@@ -1017,7 +1017,7 @@ public enum Talent {
 			case HUNTRESS:
 				Collections.addAll(tierTalents, INVIGORATING_MEAL, LIQUID_NATURE, REJUVENATING_STEPS, HEIGHTENED_SENSES, DURABLE_PROJECTILES);
 				break;
-			case DUELIST: case GOJO:
+			case DUELIST: case GOJO: case PIKACHU:
 				Collections.addAll(tierTalents, FOCUSED_MEAL, LIQUID_AGILITY, WEAPON_RECHARGING, LETHAL_HASTE, SWIFT_EQUIP);
 				break;
 			case CLERIC:
@@ -1046,7 +1046,7 @@ public enum Talent {
 			case HUNTRESS:
 				Collections.addAll(tierTalents, POINT_BLANK, SEER_SHOT);
 				break;
-			case DUELIST: case GOJO:
+			case DUELIST: case GOJO: case PIKACHU:
 				Collections.addAll(tierTalents, PRECISE_ASSAULT, DEADLY_FOLLOWUP);
 				break;
 			case CLERIC:

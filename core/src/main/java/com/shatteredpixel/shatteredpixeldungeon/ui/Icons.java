@@ -483,6 +483,8 @@ public enum Icons {
 				return new ItemSprite(ItemSpriteSheet.EXCALIBUR);
 			case GOJO:
 				return new ItemSprite(ItemSpriteSheet.LIMITLESS);
+			case PIKACHU:
+				return new ItemSprite(ItemSpriteSheet.LIGHT_BALL);
 			default:
 				return null;
 		}

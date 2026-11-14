@@ -82,6 +82,9 @@ public class WndHeroInfo extends WndTabbed {
 			case GOJO:
 				tabIcon = new ItemSprite(ItemSpriteSheet.LIMITLESS, null);
 				break;
+			case PIKACHU:
+				tabIcon = new ItemSprite(ItemSpriteSheet.LIGHT_BALL, null);
+				break;
 		}
 
 		int finalHeight = MIN_HEIGHT;
@@ -222,6 +225,12 @@ public class WndHeroInfo extends WndTabbed {
 				case GOJO:
 					icons = new Image[]{ new ItemSprite(ItemSpriteSheet.LIMITLESS),
 							Icons.get(Icons.MAGNIFY),
+							new ItemSprite(ItemSpriteSheet.GLOVES),
+							new ItemSprite(ItemSpriteSheet.SCROLL_ISAZ)};
+					break;
+				case PIKACHU:
+					icons = new Image[]{ new ItemSprite(ItemSpriteSheet.LIGHT_BALL),
+							new ItemSprite(ItemSpriteSheet.WAND_LIGHTNING),
 							new ItemSprite(ItemSpriteSheet.GLOVES),
 							new ItemSprite(ItemSpriteSheet.SCROLL_ISAZ)};
 					break;

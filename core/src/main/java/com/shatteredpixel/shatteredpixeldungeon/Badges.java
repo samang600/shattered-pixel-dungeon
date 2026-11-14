@@ -809,6 +809,7 @@ public class Badges {
 		firstBossClassBadges.put(HeroClass.CLERIC, Badge.BOSS_SLAIN_1_CLERIC);
 		firstBossClassBadges.put(HeroClass.ARTORIA, Badge.BOSS_SLAIN_1_WARRIOR);
 		firstBossClassBadges.put(HeroClass.GOJO, Badge.BOSS_SLAIN_1_DUELIST);
+		firstBossClassBadges.put(HeroClass.PIKACHU, Badge.BOSS_SLAIN_1_DUELIST);
 	}
 
 	private static LinkedHashMap<HeroClass, Badge> victoryClassBadges = new LinkedHashMap<>();
@@ -821,6 +822,7 @@ public class Badges {
 		victoryClassBadges.put(HeroClass.CLERIC, Badge.VICTORY_CLERIC);
 		victoryClassBadges.put(HeroClass.ARTORIA, Badge.VICTORY_WARRIOR);
 		victoryClassBadges.put(HeroClass.GOJO, Badge.VICTORY_DUELIST);
+		victoryClassBadges.put(HeroClass.PIKACHU, Badge.VICTORY_DUELIST);
 	}
 
 	private static LinkedHashMap<HeroSubClass, Badge> thirdBossSubclassBadges = new LinkedHashMap<>();
@@ -953,7 +955,7 @@ public class Badges {
 			case HUNTRESS:
 				badge = Badge.MASTERY_HUNTRESS;
 				break;
-			case DUELIST: case GOJO:
+			case DUELIST: case GOJO: case PIKACHU:
 				badge = Badge.MASTERY_DUELIST;
 				break;
 			case CLERIC:

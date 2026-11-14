@@ -414,10 +414,12 @@ public class ItemSpriteSheet {
 	public static final int WAND_REGROWTH       = WANDS+11;
 	public static final int WAND_TRANSFUSION    = WANDS+12;
 	public static final int LIMITLESS           = WANDS+13; //gojo's blindfold
+	public static final int LIGHT_BALL          = WANDS+14; //pikachu's light ball
 	static {
 		for (int i = WANDS; i < WANDS+16; i++)
 			assignItemRect(i, 14, 14);
 		assignItemRect(LIMITLESS, 16, 16);
+		assignItemRect(LIGHT_BALL, 12, 12);
 	}
 
 	private static final int RINGS          =                               xy(1, 15);  //16 slots

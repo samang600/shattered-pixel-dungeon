@@ -262,6 +262,8 @@ public class HeroSelectScene extends PixelScene {
 			}
 
 			int cols = (int)Math.ceil(heroBtns.size()/2f);
+			//shrink buttons if there are too many heroes to fit (e.g. with added custom heroes)
+			btnWidth = Math.max(HeroBtn.MIN_WIDTH, Math.min(btnWidth, (int)((leftArea - 4 - (cols-1)) / cols)));
 			float curX = insets.left + (leftArea - btnWidth * cols + (cols-1))/2f;
 			float curY = title.bottom() + uiSpacing;
 

@@ -57,6 +57,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MindVision;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Momentum;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MonkEnergy;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Electricity;
+import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.PhysicalEmpower;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Recharging;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Regeneration;
@@ -1588,6 +1590,13 @@ public class Hero extends Char {
 	
 	@Override
 	public int defenseProc( Char enemy, int damage ) {
+
+		//Static: pikachu's body crackles with electricity, sometimes paralyzing melee attackers
+		if (heroClass == HeroClass.PIKACHU && enemy != null && enemy.isAlive()
+				&& Dungeon.level.adjacent(pos, enemy.pos) && Random.Float() < 0.3f){
+			Buff.prolong(enemy, Paralysis.class, 2f);
+			if (enemy.sprite != null) enemy.sprite.centerEmitter().burst(SparkParticle.FACTORY, 4);
+		}
 		
 		if (damage > 0 && subClass == HeroSubClass.BERSERKER){
 			Berserk berserk = Buff.affect(this, Berserk.class);
@@ -1626,6 +1635,13 @@ public class Hero extends Char {
 		} else {
 			return super.glyphLevel(cls);
 		}
+	}
+
+	@Override
+	public boolean isImmune(Class effect) {
+		//pikachu is unharmed by electricity
+		if (heroClass == HeroClass.PIKACHU && effect == Electricity.class) return true;
+		return super.isImmune(effect);
 	}
 
 	@Override

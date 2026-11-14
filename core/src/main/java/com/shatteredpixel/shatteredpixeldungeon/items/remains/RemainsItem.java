@@ -88,7 +88,7 @@ public abstract class RemainsItem extends Item {
 				return new CloakScrap();
 			case HUNTRESS:
 				return new BowFragment();
-			case DUELIST: case GOJO:
+			case DUELIST: case GOJO: case PIKACHU:
 				return new BrokenHilt();
 			case CLERIC:
 				return new TornPage();
